@@ -12,6 +12,10 @@
       "name": "Michael",
       "url": "https://github.com/roth-michael",
       "discord": "hi25114"
+    },
+    {
+      "name": "keitan-lend",
+      "url": "https://github.com/keitan-lend"
     }
   ],
   "esmodules": [
@@ -71,8 +75,8 @@
       ]
     }
   ],
-  "url": "#{URL}#",
-  "manifest": "#{MANIFEST}#",
-  "download": "#{DOWNLOAD}#",
-  "changelog": "#{CHANGELOG}#"
+  "url": "https://github.com/keitan-lend/aura-effects-t20",
+  "manifest": "https://github.com/keitan-lend/aura-effects-t20/releases/latest/download/module.json",
+  "download": "https://github.com/keitan-lend/aura-effects-t20/releases/latest/download/module.zip",
+  "changelog": "https://github.com/keitan-lend/aura-effects-t20/blob/main/CHANGELOG.md"
 }

@@ -4,6 +4,16 @@ Este repositório é um fork do módulo original **[Aura Effects](https://git.ga
 
 Toda a documentação de uso, exemplos e explicação dos campos permanece no repositório original — aqui constam apenas as alterações feitas nesta versão.
 
+## Instalação
+
+No Foundry, vá em **Add-on Modules → Install Module** e cole este link no campo "Manifest URL":
+
+```
+https://github.com/keitan-lend/aura-effects-t20/releases/latest/download/module.json
+```
+
+> Esse link só funciona depois que você publicar pelo menos um Release no GitHub com os arquivos `module.json` e `module.zip` anexados (veja o passo a passo que combinamos).
+
 ## Alterações desta versão (2.2.2-t20.1)
 
 - **Correção de bug em `queries.mjs`**: na escolha de qual aura "vence" entre múltiplos efeitos não-empilháveis com o mesmo nome, a comparação usava o documento original (`effect`) em vez dos dados já processados (`effectData`), fazendo a substituição nunca (ou incorretamente) acontecer.
