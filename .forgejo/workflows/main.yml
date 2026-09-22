@@ -1,0 +1,65 @@
+env:
+  project_url: "https://git.gay/${{github.repository}}"
+  latest_manifest_url: "https://git.gay/${{github.repository}}/releases/download/latest/module.json"
+  release_module_url: "https://git.gay/${{github.repository}}/releases/download/${{forgejo.event.release.tag_name}}/module.zip"
+  changelog_url: "https://git.gay/${{github.repository}}/releases/tag/${{forgejo.event.release.tag_name}}"
+  package_version: "${{forgejo.event.release.tag_name}}"
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install Prerequisites
+        run: npm ci
+
+      - name: Replace Manifest Fields
+        shell: bash
+        run: |
+          tmp=$(mktemp)
+          jq '.version = $ENV.package_version' module.json | jq '.url = $ENV.project_url' | jq '.manifest = $ENV.latest_manifest_url' | jq '.download = $ENV.release_module_url' | jq '.changelog = $ENV.changelog_url' > "$tmp" && mv "$tmp" module.json
+
+      - name: Compile Packs
+        run: npm run compile
+
+      - name: Create Archive
+        run: |
+          zip --recurse-paths \
+          ./module.zip        \
+          lang                \
+          packs               \
+          scripts             \
+          styles              \
+          templates           \
+          LICENSE             \
+          module.json
+
+      - name: Move Archive & Manifest
+        run: |
+          mkdir tmp
+          cp module.json tmp/module.json
+          cp module.zip tmp/module.zip
+
+      - name: Generate Partial Changelog
+        run: |
+          grep -B 999 -m 2 "^## " CHANGELOG.md | head -n -2 | tail -n +4 > release_notes.md
+      
+      - name: Update Release with Files
+        uses: actions/forgejo-release@v2.13.4
+        with:
+          direction: upload
+          release-dir: tmp
+          override: true
+          release-notes-file: release_notes.md

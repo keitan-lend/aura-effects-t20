@@ -1,0 +1,87 @@
+import { DISPOSITIONS } from "./constants.mjs";
+import { executeScript } from "./helpers.mjs";
+
+const { ArrayField, BooleanField, ColorField, JavaScriptField, NumberField, SetField, SchemaField, StringField } = foundry.data.fields;
+
+export default function AuraActiveEffectDataMixin(ActiveEffectClass) {
+  return class AuraActiveEffectData extends ActiveEffectClass {
+    static LOCALIZATION_PREFIXES = [...super.LOCALIZATION_PREFIXES, "AURAEFFECTS.ACTIVEEFFECT.Aura"];
+    static defineSchema() {
+      const schema = super.defineSchema();
+      return {
+        ...schema,
+        applyToSelf: new BooleanField({ initial: true }),
+        bestFormula: new StringField({ initial: "" }),
+        canStack: new BooleanField({ initial: false }),
+        collisionType: new StringField({
+          choices: {
+            "": "COMMON.None",
+            light: "WALL.FIELDS.light.label",
+            move: "WALL.FIELDS.move.label",
+            sight: "WALL.FIELDS.sight.label",
+            sound: "WALL.FIELDS.sound.label"
+          },
+          required: true,
+          blank: true,
+          initial: "move"
+        }),
+        color: new ColorField(),
+        combatOnly: new BooleanField({ initial: false }),
+        disableOnHidden: new BooleanField({ initial: true }),
+        distanceFormula: new StringField({ initial: "0" }),
+        disposition: new NumberField({
+          initial: DISPOSITIONS.ANY,
+          choices: {
+            [DISPOSITIONS.HOSTILE]: "AURAEFFECTS.ACTIVEEFFECT.Aura.FIELDS.disposition.Choices.Hostile",
+            [DISPOSITIONS.ANY]: "AURAEFFECTS.ACTIVEEFFECT.Aura.FIELDS.disposition.Choices.Any",
+            [DISPOSITIONS.FRIENDLY]: "AURAEFFECTS.ACTIVEEFFECT.Aura.FIELDS.disposition.Choices.Friendly"
+          }
+        }),
+        evaluatePreApply: new BooleanField({ initial: false }),
+        overrideName: new StringField({ initial: '' }),
+        script: new JavaScriptField(),
+        stashedChanges: new ArrayField(new SchemaField({
+          key: new StringField(),
+          value: new StringField(),
+          mode: new NumberField(),
+          priority: new NumberField()
+        })),
+        stashedStatuses: new SetField(new StringField()),
+        showRadius: new BooleanField({ initial: false })
+      }
+    }
+  
+    get isSuppressed() {
+      if (super.isSuppressed) return true;
+      if (this.combatOnly && this.parent.actor && !this.parent.actor.inCombat) return true;
+      if (this.disableOnHidden) {
+        let actor = this.parent.parent;
+        if (actor instanceof Item) actor = actor.actor;
+        if (actor?.getActiveTokens(false, true)[0]?.hidden) return true;
+      }
+      return false;
+    }
+  
+    get distance() {
+      return new Roll(this.distanceFormula || "0", this.parent.parent?.getRollData?.()).evaluateSync({ strict: false }).total;
+    }
+
+    static migrateData(source, options, state) {
+      if (!("collisionType" in source) && source.collisionTypes?.length) {
+        source.collisionType = source.collisionTypes[0];
+        delete source.collisionTypes;
+      }
+      return super.migrateData(source, options, state);
+    }
+
+    prepareDerivedData() {
+      super.prepareDerivedData?.();
+      let actor = this.parent.parent;
+      if (actor instanceof Item) actor = actor.actor;
+      this.stashedChanges = this.changes;
+      this.stashedStatuses = this.parent.statuses;
+      this.changes = [];
+      this.parent.statuses = new Set();
+    }
+  }
+}
