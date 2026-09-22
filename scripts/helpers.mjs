@@ -262,7 +262,7 @@ function getRegionDataFromEffect(effect, token) {
         height: token._source.height,
         shape: token._source.shape
       },
-      gridBased: true,
+      gridBased: false,
       hole: false,
       radius: token.parent.dimensions.distancePixels * effect.system.distance
     }],
